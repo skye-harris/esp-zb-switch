@@ -21,6 +21,7 @@ void (*onCreateClustersCallback)(esp_zb_cluster_list_t *clusterList) = NULL;
 esp_err_t (*onAttributeUpdatedCallback)(const esp_zb_zcl_set_attr_value_message_t *message);
 esp_err_t (*onCustomClusterCommandCallback)(const esp_zb_zcl_custom_cluster_command_message_t *message);
 void (*onIdentifyCallback)(bool isIdentifying) = NULL;
+void (*onInitCallback)() = NULL;
 
 // Cluster Action callback
 static esp_err_t onZigbeeAction(esp_zb_core_action_callback_id_t callback_id, const void *message) {
@@ -108,6 +109,10 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct) {
                     esp_zb_bdb_start_top_level_commissioning(ESP_ZB_BDB_MODE_NETWORK_STEERING);
                 } else {
                     log_i("Device rebooted");
+
+                    if (onInitCallback != NULL) {
+                        onInitCallback();
+                    }
                 }
             } else {
                 /* commissioning failed */
@@ -167,8 +172,8 @@ static esp_zb_cluster_list_t *createBasicClusters() {
 }
 
 // Create Endpoint
-static esp_zb_ep_list_t *createSensorEndpoint(uint8_t endpoint_id) {
-    log_i("Creating Sensor Endpoint");
+static esp_zb_ep_list_t *createEndpoint(uint8_t endpoint_id) {
+    log_i("Creating Endpoint");
     esp_zb_ep_list_t *ep_list = esp_zb_ep_list_create();
     esp_zb_endpoint_config_t endpoint_config = {
         .endpoint = endpoint_id,
@@ -196,14 +201,14 @@ static void taskZigbeeMain(void *pvParameters) {
     esp_zb_set_trace_level_mask(ESP_ZB_TRACE_LEVEL_CRITICAL, ESP_ZB_TRACE_SUBSYSTEM_MAC | ESP_ZB_TRACE_SUBSYSTEM_APP);
 
     // Initialise our configuration
-    esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
+    esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZCR_CONFIG();
     esp_zb_init(&zb_nwk_cfg);
 
     /* Create customized sensor endpoint */
-    esp_zb_ep_list_t *esp_zb_sensor_ep = createSensorEndpoint(HA_ESP_SENSOR_ENDPOINT);
+    esp_zb_ep_list_t *endpoint = createEndpoint(HA_ESP_SENSOR_ENDPOINT);
 
     /* Register the device */
-    esp_zb_device_register(esp_zb_sensor_ep);
+    esp_zb_device_register(endpoint);
 
     /* Register our action callback */
     esp_zb_core_action_handler_register(onZigbeeAction);
@@ -253,4 +258,8 @@ void ZB_SetOnCustomClusterCommandCallback(esp_err_t (*callback)(const esp_zb_zcl
 
 void ZB_SetOnIdentifyCallback(void (*callback)(bool isIdentifying)) {
     onIdentifyCallback = callback;
+}
+
+void ZB_SetOnInitCallback(void (*callback)()) {
+    onInitCallback = callback;
 }

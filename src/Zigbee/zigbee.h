@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ZIGBEE_MODE_ED
-    #error "Zigbee end device mode ZIGBEE_MODE_ED is not set in platformio.ini"
+#ifndef ZIGBEE_MODE_ZCZR
+    #error "Zigbee device mode ZIGBEE_MODE_ZCZR is not set in platformio.ini build flags"
 #endif
 
 #include "esp_zigbee_attribute.h"
@@ -39,9 +39,9 @@
 #define HA_ESP_SENSOR_ENDPOINT 1
 
 /* Default End Device config */
-#define ESP_ZB_ZED_CONFIG()                               \
+#define ESP_ZB_ZCR_CONFIG()                               \
     {                                                     \
-        .esp_zb_role = ESP_ZB_DEVICE_TYPE_ED,             \
+        .esp_zb_role = ESP_ZB_DEVICE_TYPE_ROUTER,         \
         .install_code_policy = INSTALLCODE_POLICY_ENABLE, \
         .nwk_cfg = {                                      \
             .zed_cfg =                                    \
@@ -69,3 +69,4 @@ void ZB_SetOnCreateClustersCallback(void (*callback)(esp_zb_cluster_list_t *clus
 void ZB_SetOnAttributeUpdatedCallback(esp_err_t (*callback)(const esp_zb_zcl_set_attr_value_message_t *message));
 void ZB_SetOnCustomClusterCommandCallback(esp_err_t (*callback)(const esp_zb_zcl_custom_cluster_command_message_t *message));
 void ZB_SetOnIdentifyCallback(void (*callback)(bool isIdentifying));
+void ZB_SetOnInitCallback(void (*callback)());
